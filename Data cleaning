@@ -1,0 +1,60 @@
+load(file = "~/University College London/BENV0091 Energy Data Analysis/Group project/wookie/London smart meter data 1GB/halfhourly_data.Rda")
+
+library(lubridate)
+library(tidyverse)
+library(stringr)
+library(ggplot2)
+library(janitor)
+
+hh_full_data <- hh_data
+rm(hh_data)
+
+str(hh_full_data) # Let's look at the features and see what types of variables there are.
+
+# DATA CLEANING
+
+# Some categorical variables need to be converted to type factor.
+
+hh_full_data$ID <- as.factor(hh_full_data$ID)
+hh_full_data$year <- as.factor(hh_full_data$year)
+hh_full_data$month <- as.factor(hh_full_data$month)
+hh_full_data$tariff_type <- as.factor(hh_full_data$tariff_type)
+hh_full_data$ACORN_group <- as.factor(hh_full_data$ACORN_group)
+hh_full_data$ACORN_type <- as.factor(hh_full_data$ACORN_type)
+hh_full_data$is_we_hd <- as.factor(hh_full_data$is_we_hd)
+
+
+# MISSING DATA
+
+missing_values <- hh_full_data[which(rowSums(is.na(hh_full_data[,3:50])) > 0),] # Subset of hh_full_data, showing all the rows with more than 0 NA values.
+
+
+# DISTRIBUTION OF ZERO VALUES
+
+zero_values_distribution <- tabyl(rowSums(hh_full_data[,3:50] == 0), show_na = F) # Counts the number of zero values in each row and outputs a frequency table, showing the number of rows that contain 1, 2, ... , 48 zero values.
+names(zero_values_distribution) <- c('num_of_zeros', 'counts', 'percentage')
+zero_values_distribution  # Frequency distribution of zero values.
+sum(zero_values_distribution[2:49,2])/nrow(hh_full_data) # 4.32 % of the rows of hh_full_data have 1 or more zero values.
+
+# DISTRIBUTION OF NA VALUES
+
+na_values_distribution <- tabyl(rowSums(is.na(hh_full_data[,3:50]))) # Counts the number of NA values in each row and outputs a frequency table, showing the number of rows that contain 1, 2, ... , 48 NA values.
+names(na_values_distribution) <- c('num_of_NAs', 'counts', 'percentage')
+na_values_distribution # Frequency distribution of NA values. Interesting to note that all rows that contain NA values, don't have more than 1 NA.
+na_values_distribution[2,2]/nrow(hh_full_data) # 0.2 % of the rows of hh_full_data have 1 or more zero values.
+
+
+# Plot of the distribution of zero values for subsetted rows with at least one zero value.
+ggplot(zero_values_distribution[2:49,], aes(x = num_of_zeros, y = counts)) +
+  theme(axis.text = element_text(size= 15), text = element_text(size = 20)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  scale_x_discrete(limits = seq(1, 48, 2)) +
+  labs(x = "Number of zeros", y = "Counts") +
+  scale_y_continuous(breaks = seq(0, 15000, 5000))
+
+# We should decide on how the rows with zero and NA values should be cleaned.
+
+# For the rows that contain NA values, I suggest that we keep the rows, as all rows only contain one NA value.
+# For the rows that contain zero values, I arbitrarily suggest we omit all rows that have > 30 zero values. Let's discuss this!
+
+hh_full_data <- hh_full_data[which(rowSums(hh_full_data[,3:50] == 0) < 30),]
