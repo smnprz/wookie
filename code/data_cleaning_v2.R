@@ -74,8 +74,8 @@ ID_count_2 <- ID_count[ID_count$n>=365*0.8,]
 
 hh_data <- hh_data[hh_data$ID %in% ID_count_2$ID,]
 
-#Keep rows with at least one half hour value different than NA (discussion!)
-hh_data <- hh_data[!is.na(hh_data$daily_total),]
+#NA ROWS
+#ADD LINEAR INTERPOLATION
 
 #Keep rows with at least 20 half hour values different than 0 (discussion!)
 hh_data <- hh_data[which(rowSums(hh_data[,3:50] == 0) <= 28),]
