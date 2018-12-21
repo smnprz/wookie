@@ -37,6 +37,7 @@ names(na_values_distribution) <- c('num_of_NAs', 'counts', 'percentage')
 na_values_distribution # Frequency distribution of NA values. Interesting to note that all rows that contain NA values, don't have more than 1 NA.
 na_values_distribution[2,2]/nrow(hh_full_data) # 0.2 % of the rows of hh_full_data have 1 or more NA values.
 
+
 # LINEAR INTERPOLATION OF THE NA VALUES
 
 # Check to make sure that all na values appear in column hh_30
@@ -90,7 +91,7 @@ ggplot(zero_values_distribution[2:49,], aes(x = num_of_zeros, y = counts)) +
 # For now it's agreed that we should at least get rid of all the rows with 48 zeros.
 hh_full_data <- hh_full_data[which(rowSums(hh_full_data[,3:50] == 0) < 48),]
 
-# NEED TO CHECK THE CONTROL GROUP.
+# NEED TO CHECK THE CONTROL GROUP
 
 # Select data only from 2013 and with standar tariff (only control group from the experiment)
 hh_data <- hh_full_data
