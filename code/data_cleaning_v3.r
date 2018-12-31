@@ -159,28 +159,8 @@ norm_hh$date <- hh_data_ss$date
 
 hh_data_ss <- merge(hh_data_ss,norm_hh,by = c("ID","date"))
 
-#NIGHT USE from 6pm to 6am (discuss!) 
+# DEFINING THE NIGHT/DAY AND PEAK/OFF-PEAK USAGE.
 
-hh_data_ss$night_total <- hh_data_ss$hh_0 + hh_data_ss$hh_1 + hh_data_ss$hh_2 + hh_data_ss$hh_3 + hh_data_ss$hh_4 + hh_data_ss$hh_5 + hh_data_ss$hh_6 + hh_data_ss$hh_7 + hh_data_ss$hh_8 + hh_data_ss$hh_9 + hh_data_ss$hh_10 + hh_data_ss$hh_11 +
-  + hh_data_ss$hh_36 + hh_data_ss$hh_37 + hh_data_ss$hh_38 + hh_data_ss$hh_39 + hh_data_ss$hh_40 + hh_data_ss$hh_41 + hh_data_ss$hh_42 + hh_data_ss$hh_43 + hh_data_ss$hh_44 + hh_data_ss$hh_45 + hh_data_ss$hh_46 + hh_data_ss$hh_47
-
-hh_data_ss$day_total <- hh_data_ss$daily_total-hh_data_ss$night_total
-
-#DAY-NIGTH RATIO
-hh_data_ss$dn_ratio <- hh_data_ss$day_total/hh_data_ss$night_total
-hh_data_ss$nt_ratio <- hh_data_ss$night_total/hh_data_ss$daily_total
-hh_data_ss$dt_ratio <- hh_data_ss$day_total/hh_data_ss$daily_total
-
-#Non-PEAK hours from 23:00 to 7:00 (discuss!)
-#https://customerservices.npower.com/app/answers/detail/a_id/179/~/what-are-the-economy-7-peak-and-off-peak-periods%3F
-hh_data_ss$off_peak_total <- hh_data_ss$hh_0 + hh_data_ss$hh_1 + hh_data_ss$hh_2 + hh_data_ss$hh_3 + hh_data_ss$hh_4 + hh_data_ss$hh_5 + hh_data_ss$hh_6 + hh_data_ss$hh_7 + hh_data_ss$hh_8 + hh_data_ss$hh_9 + hh_data_ss$hh_10 + hh_data_ss$hh_11 + hh_data_ss$hh_12 + hh_data_ss$hh_13+
-  hh_data_ss$hh_46 + hh_data_ss$hh_47
-
-#PEAK hous from 16:00 to 19:00 (discuss!)
-#https://www.theguardian.com/money/2017/jan/07/night-time-use-electrical-appliances-lower-bills-fire-risk
-hh_data_ss$peak_total <- hh_data_ss$hh_32 + hh_data_ss$hh_33 + hh_data_ss$hh_34 + hh_data_ss$hh_35 + hh_data_ss$hh_36 + hh_data_ss$hh_37
-
-#' My comments on defining night/day peak/off-peak usage:
 #' As the energy supplier of the London households was EDF (as Yue found in her research into the control group!),
 #' I suggest we base our definition of these periods, on the EDF 'Std' tariff (economy 7). 
 #' 
@@ -188,18 +168,26 @@ hh_data_ss$peak_total <- hh_data_ss$hh_32 + hh_data_ss$hh_33 + hh_data_ss$hh_34 
 #' 
 #' EDF define the hours from 8AM - 8PM as peak/day-time usage and 8PM - 8AM as off-peak night-time usage.
 
-#PEAK-OFF PEAK RAIO
-hh_data_ss$po_ratio <- hh_data_ss$peak_total/hh_data_ss$off_peak_total
-hh_data_ss$pt_ratio <- hh_data_ss$peak_total/hh_data_ss$daily_total
-hh_data_ss$ot_ratio <- hh_data_ss$off_peak_total/hh_data_ss$daily_total
+#NIGHT USE from 8PM to 8AM. This is also the OFF-PEAK usage. 
+
+hh_data_ss$night_total <- hh_data_ss$hh_40 + hh_data_ss$hh_41 + hh_data_ss$hh_42 + hh_data_ss$hh_43 + hh_data_ss$hh_44 +
+  hh_data_ss$hh_45 + hh_data_ss$hh_46 + hh_data_ss$hh_47 + hh_data_ss$hh_0 + hh_data_ss$hh_1 + hh_data_ss$hh_2 +
+  hh_data_ss$hh_3 + hh_data_ss$hh_4 + hh_data_ss$hh_5 + hh_data_ss$hh_6 + hh_data_ss$hh_7 + hh_data_ss$hh_8 + hh_data_ss$hh_9 +
+  hh_data_ss$hh_10 + hh_data_ss$hh_11 + hh_data_ss$hh_12 + hh_data_ss$hh_13 + hh_data_ss$hh_14 + hh_data_ss$hh_15
+
+# DAY USE from 8AM - 8PM. This is also the PEAK usage.
+
+hh_data_ss$day_total <- hh_data_ss$daily_total-hh_data_ss$night_total
+
+#DAY-NIGTH RATIO
+hh_data_ss$dn_ratio <- hh_data_ss$day_total/hh_data_ss$night_total # This is also the peak/off-peak ratio.
+hh_data_ss$nt_ratio <- hh_data_ss$night_total/hh_data_ss$daily_total # This is also the off-peak/total ratio.
+hh_data_ss$dt_ratio <- hh_data_ss$day_total/hh_data_ss$daily_total # This is also the peak/total ratio.
 
 #ELIIMINATE INFINITES DUE TO CONSUMPTION == 0
 hh_data_ss[is.infinite(hh_data_ss$dn_ratio),]$dn_ratio <- NaN 
-hh_data_ss[is.infinite(hh_data_ss$po_ratio),]$po_ratio <- NaN
 hh_data_ss[is.infinite(hh_data_ss$dt_ratio),]$dt_ratio <- NaN 
 hh_data_ss[is.infinite(hh_data_ss$nt_ratio),]$nt_ratio <- NaN 
-hh_data_ss[is.infinite(hh_data_ss$pt_ratio),]$pt_ratio <- NaN 
-hh_data_ss[is.infinite(hh_data_ss$ot_ratio),]$ot_ratio <- NaN
 
 #Summarize dataset
 
@@ -213,8 +201,7 @@ hh_data_ID <- hh_data_ss %>%
   group_by(ID) %>%
   dplyr::summarise(m_daily_total = mean(daily_total, na.rm = TRUE), sd_daily_total = sd(daily_total, na.rm = TRUE),
                    dn_ratio = mean(dn_ratio, na.rm = TRUE),dt_ratio = mean(dt_ratio, na.rm = TRUE), 
-                   nt_ratio = mean(nt_ratio, na.rm = TRUE),po_ratio=mean(po_ratio, na.rm = TRUE),
-                   pt_ratio = mean(pt_ratio, na.rm = TRUE),ot_ratio = mean(ot_ratio, na.rm = TRUE),
+                   nt_ratio = mean(nt_ratio, na.rm = TRUE),
                    hh_max = mean(hh_max, na.rm = TRUE),hh_min = mean(hh_min, na.rm = TRUE),
                    hh_p25 = mean(hh_p25, na.rm = TRUE),hh_p75 = mean(hh_p75, na.rm = TRUE),
                    hh_sd = mean(hourly_sd, na.rm = TRUE),hh_sdm_ratio = mean(hourly_sdm_ratio, na.rm = TRUE),
@@ -268,26 +255,19 @@ ID_type[ID_type$ACORN_type == "Affluent",]$affluent <- 1
 ID_type[ID_type$ACORN_type == "Comfortable",]$comfortable <- 1 
 ID_type<-select(ID_type,c('adversity','affluent','comfortable','ACORN_type','ID'))
 
-# Really nice creation of the binary response variables for the adversity, affluent and comfortable acorn groups!
-# However, I am wondering about the need for these variables. Wouldn't the 'ACORN_type' variable be sufficient for
-# our analyses? Regardless of this, the ID_type dataframe is nice.
-
 ID_type <- ID_type[order(ID_type$ID),]
 hh_data_ID <- hh_data_ID[order(hh_data_ID$ID),]
 
 input_hh <- select(hh_data_ID,-c('ID')) 
-# What's your reason for deleting the ID column here? We no longer know which observation in the half hourly data
-# is associated with which household anymore (please correct me if I'm wrong).
 
-output_hh <- ID_type$adversity 
-# Only the adversity group? Wouldn't you need response variables for the other ACORN groups too?
-
-#output_hh_adv <- ID_type$adversity
-#output_hh_comf <- ID_type$comfortable
-##output_hh_aff <- ID_type$affluent
+output_hh_adv <- ID_type$adversity
+output_hh_comf <- ID_type$comfortable
+output_hh_aff <- ID_type$affluent
 
 # SAVE RESULTING TIDY AND WIDE EXTENDED DATASET -----
-save(hh_data_ss,ID_type,input_hh,output_hh,file="E:/University College London/BENV0091 Energy Data Analysis/Group project/Data/hh_class_input.Rda")
+# hh_data_ss is the data set for the control group.
+# ID_type  
+save(hh_data_ss,ID_type,input_hh,output_hh_adv, output_hh_comf, output_hh_aff, file="E:/University College London/BENV0091 Energy Data Analysis/Group project/Data/hh_class_input.Rda")
 
 #The predicted output from each method should be a nx1 binary matrix
 #just to check. How many rows does your input have? I have 4095
