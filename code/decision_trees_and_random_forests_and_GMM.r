@@ -161,3 +161,113 @@ rf1_cnf_matrix <- data.frame(rf1$confusion)
 
 write.csv(x = rf1_cnf_matrix, file = "rf1_cnf_matrix.csv")
 
+########################################################################################################
+#
+#                                       Gaussian Mixture Models
+#
+########################################################################################################
+
+library(mclust)
+
+# Categorical variables aren't allowed to be present in the input dataframe. So let's get rid of the
+# response variable.
+
+input_hh$ACORN_type <- NULL
+
+# The first model is created using Mclust and the default settings.
+
+mod1 <- Mclust(input_hh)
+
+# Show the results by inputting into the summary function.
+
+plot(mod1, what = 'BIC')
+summary(mod1$classification) # In this plot, the covariance model with the highest BIC was selected. This model corresponded to one cluster, hence why only one cluster was identified.
+
+# Create a new model but set G = 3.
+mod2 <- Mclust(input_hh, G = 3)
+summary(mod2, parameters = T) # Gives detailed information on what the parameters for each partition/cluster/mixture components were upon convergence.
+plot(mod2, what = 'BIC')
+
+# Building the confusion matrix.
+ID_type$ACORN_type <- factor(ID_type$ACORN_type)
+Class <- ID_type$ACORN_type
+table(Class, mod2$classification)
+
+# Create a new model but this time, specify the covariance models and not the number of mixture components.
+
+mod3 <- Mclust(input_hh, modelNames = c('VVI', 'EVI', 'VEI', 'EEI'))
+summary(mod3)
+plot(mod3, what = 'BIC',  legendArgs = list(x = 'bottomright'))  # This plot shows that highest BIC was calculated when 9 mixture components were used. In other words, the GMM is having a tough time identifying 3 clusters within the input dataspace.
+summary(mod3$BIC) # Shows the best 3 covariance models in terms of BIC.
+table(Class, mod3$classification) # Nonsensical
+
+# Create mod4, which has G = 3 and the best 4 covariance models in terms of BIC specified.
+
+mod4 <- Mclust(input_hh, G = 3, modelNames = c('VVI', 'EVI', 'VEI', 'EEI'))
+summary(mod4)
+plot(mod4, what = 'BIC',  legendArgs = list(x = 'bottomright'))  # This plot shows that highest BIC was calculated when 9 mixture components were used. In other words, the GMM is having a tough time identifying 3 clusters within the input dataspace.
+summary(mod4$BIC) # Shows the best 3 covariance models in terms of BIC.
+table(Class, mod4$classification)
+adjustedRandIndex(Class, mod4$classification) # This number represents a measure of agreement between the known classifications of the training data and the identified clusters using mod4. At 0.8%, there is not much agreement at all.
+
+# What were the top 4 features for determining the clusters?
+# drmod4 can be used to project the feature space onto a subspace (dimensionality reduction).
+
+# "The estimated directions which span the reduced subspace are defined as a set of linear combinations
+# of the original features, ordered by importance as quantified by the associated eigenvalues."
+
+# - Scrucca L. Dimension reduction for model-based clustering. Statistics and Computing. 
+# 2010;20(4):471–484. doi: 10.1007/s11222-009-9138-7.
+
+drmod4 <- MclustDR(mod4, lambda = 1)
+summary(drmod4) # The top features were m_daily_total, sd_daily_total, dn_ratio and dt_ratio.
+# Feature importance is defined in terms of the separation amongst the estimated clusters.
+# By setting lambda = 1 within the MclusterDR function, only the information on cluster means
+# is used for estimating the directions.
+
+plot(drmod4, what = "scatterplot") # This visualises the estimated clusters in Dir1 and Dir2.
+# Let's show all the misclassified points.
+miscl <- classError(Class, mod4$classification)$misclassified # error rate of 0.5976927.
+points(drmod4$dir[miscl,], pch = 1, cex = 2) # This shows visually how the accuracy of the GMM. All the black circles represent the misclassified data points.
+
+
+
+test <- data.frame(drmod4$dir[,1:2], drmod4$class)
+str(test$drmod4.class)
+plot(test$Dir1, test$Dir2, what = "scatterlpot")
+
+test2 <- test[which(test$drmod4.class == 1),]
+nrow(test2) # 1648 observations. This class corresponds to adversity.
+plot(test2$Dir1, test2$Dir2, what = "scatterlpot", ylim = c(-0.15, 0.1), xlim = c(-0.4, 0.1))
+
+test3 <- test[which(test$drmod4.class == 2),]
+nrow(test3) # 1742 observations. This class corresponds to affluent.
+plot(test3$Dir1, test3$Dir2, what = "scatterlpot", ylim = c(-0.15, 0.1), xlim = c(-0.4, 0.1))
+
+test4 <- test[which(test$drmod4.class == 3),]
+nrow(test4) # 648 observations. This class corresponds to comfortable.
+plot(test4$Dir1, test4$Dir2, what = "scatterlpot", ylim = c(-0.15, 0.1), xlim = c(-0.4, 0.1))
+
+# Therefore, green is comfortable, red is affluent and blue is adversity.
+
+
+# Visualise the relationships between the top four features as indentified by MclustDR. 
+plot(mod4, what = 'classification', dimens = c(1:4), lower.panel = NULL)
+
+test5 <- mod4$data[,1:4]
+
+clp4 <- clPairs(test5, mod4$classification, lower.panel = NULL, gap = 0.5,
+                symbols = c(16,15,17), colors = adjustcolor(col, alpha.f = 0.5))
+clPairsLegend(x = 0.1, y = 0.3, class = clp$class, col = col, pch = clp$pch,
+              title = 'ACORN groups')
+
+# Plotting the four dimensions with the greatest separation.
+
+X <- input_hh[,1:4]
+col <- mclust.options('classPlotColors')[1:3]
+clp2 <- clPairs(X, Class, lower.panel = NULL, gap = 0.5,
+               symbols = c(16,15,17), colors = adjustcolor(col, alpha.f = 0.5))
+clPairsLegend(x = 0.1, y = 0.3, class = clp$class, col = col, pch = clp$pch,
+              title = 'ACORN groups')
+
+
