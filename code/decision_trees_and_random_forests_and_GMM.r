@@ -207,6 +207,12 @@ mod4 <- Mclust(input_hh, G = 3, modelNames = c('VVI', 'EVI', 'VEI', 'EEI'))
 summary(mod4)
 plot(mod4, what = 'BIC',  legendArgs = list(x = 'bottomright'))  # This plot shows that highest BIC was calculated when 9 mixture components were used. In other words, the GMM is having a tough time identifying 3 clusters within the input dataspace.
 summary(mod4$BIC) # Shows the best 3 covariance models in terms of BIC.
+# From comparing the distribution of the data points across the ACORN groups with the
+# mixing coefficients, it's assumed that cluster 1 corresponds to affluent, cluster 2
+# corresponds to adversity and cluster 3 comfortable. 
+mod4$classification[which(mod4$classification == 1)] <- 4
+mod4$classification[which(mod4$classification == 2)] <- 1
+mod4$classification[which(mod4$classification == 4)] <- 2
 table(Class, mod4$classification)
 adjustedRandIndex(Class, mod4$classification) # This number represents a measure of agreement between the known classifications of the training data and the identified clusters using mod4. At 0.8%, there is not much agreement at all.
 
@@ -237,18 +243,18 @@ str(test$drmod4.class)
 plot(test$Dir1, test$Dir2, what = "scatterlpot")
 
 test2 <- test[which(test$drmod4.class == 1),]
-nrow(test2) # 1648 observations. This class corresponds to adversity.
+nrow(test2) # 1648 observations. This class corresponds to cluster 1.
 plot(test2$Dir1, test2$Dir2, what = "scatterlpot", ylim = c(-0.15, 0.1), xlim = c(-0.4, 0.1))
 
 test3 <- test[which(test$drmod4.class == 2),]
-nrow(test3) # 1742 observations. This class corresponds to affluent.
+nrow(test3) # 1742 observations. This class corresponds to cluster 2.
 plot(test3$Dir1, test3$Dir2, what = "scatterlpot", ylim = c(-0.15, 0.1), xlim = c(-0.4, 0.1))
 
 test4 <- test[which(test$drmod4.class == 3),]
-nrow(test4) # 648 observations. This class corresponds to comfortable.
+nrow(test4) # 648 observations. This class corresponds to cluster 3.
 plot(test4$Dir1, test4$Dir2, what = "scatterlpot", ylim = c(-0.15, 0.1), xlim = c(-0.4, 0.1))
 
-# Therefore, green is comfortable, red is affluent and blue is adversity.
+# Therefore, green is cluster 3, red is cluster 2 and blue is cluster 1.
 
 
 # Visualise the relationships between the top four features as indentified by MclustDR. 
@@ -258,8 +264,11 @@ test5 <- mod4$data[,1:4]
 
 clp4 <- clPairs(test5, mod4$classification, lower.panel = NULL, gap = 0.5,
                 symbols = c(16,15,17), colors = adjustcolor(col, alpha.f = 0.5))
-clPairsLegend(x = 0.1, y = 0.3, class = clp$class, col = col, pch = clp$pch,
-              title = 'ACORN groups')
+
+# Change the colour labels.
+clp4$class <- c("Cluster 1", "Cluster 2", "Cluster 3")
+clPairsLegend(x = 0.1, y = 0.3, class = clp4$class, col = col, pch = clp4$pch,
+              title = 'Clusters')
 
 # Plotting the four dimensions with the greatest separation.
 
@@ -270,4 +279,6 @@ clp2 <- clPairs(X, Class, lower.panel = NULL, gap = 0.5,
 clPairsLegend(x = 0.1, y = 0.3, class = clp$class, col = col, pch = clp$pch,
               title = 'ACORN groups')
 
-
+# Saving the confusion matrix as a csv file.
+gmm_confusion_matrix <- table(Class, mod4$classification)
+write.csv(x = gmm_confusion_matrix, file = "gmm_confusion_matrix.csv")
