@@ -13,6 +13,7 @@ library(factoextra)
 library(matrixStats)
 
 # LOAD DATA ----
+setwd("D:/OneDrive - CELSIA S.A E.S.P/0 - London/R/091 Energy Data Analysis/wookie")
 load("../Data/SML_data/tidy_data/halfhourly_data.Rda")
 
 # REMOVE MISSING VALUES
@@ -45,14 +46,15 @@ nrow(hh_data[hh_data$daily_total==0,])
 length(unique(hh_data[hh_data$daily_total==0,]$ID))/length(unique(hh_data$ID))
 
 # SELECT A SUBSET OF DATA SET OF IDS FOR ANALYSIS (TEMPORARY)----
-ids <-  unique(hh_data$ID)
-rand <- floor(runif(floor(length(ids)/10), min=0, max=length(ids)))
-ids_n <- ids[rand]
-hh_data <- hh_data[hh_data$ID %in% ids_n,]
+
+#ids <-  unique(hh_data$ID)
+#rand <- floor(runif(floor(length(ids)/10), min=0, max=length(ids)))
+#ids_n <- ids[rand]
+#hh_data <- hh_data[hh_data$ID %in% ids_n,]
 
 # CREATE USEFULL VARIABLES FOR ANALYSIS----
 
-hh_data$year_month <- paste(as.character(hh_data$year),as.character(hh_data$month),sep = '-')
+hh_data$year_month <- substr(ISOdate(as.numeric(as.character(hh_data$year)),as.numeric(as.character(hh_data$month)),1),1,10)
 hh_data$year_month <- factor(hh_data$year_month)
 
 #proportion of energy used in hour x versus daily total
@@ -140,6 +142,7 @@ hh_cons <- data.matrix(select(hh_data,c(3:40)))
 hh_data$hourly_sd <- rowSds(hh_cons,na.rm=TRUE)
 hh_data$hourly_sdm_ratio <- hh_data$hourly_sd/(hh_data$daily_total/48)
 rm(hh_cons)
+
 
 # SUMMARIZE THE DATASET----
 hh_data %>%
@@ -240,6 +243,25 @@ ggplot(data=hh_data)+
   theme_minimal()
 ggsave("analisys_v0/plot12.png")
 
+hh_data_sum3 <- hh_data %>%
+  group_by(year_month) %>%
+  dplyr::summarize(month_total=sum(daily_total),n_houses=length(unique(ID)),month_average=month_total/n_houses,
+                   year=mean(as.numeric(as.character(year))),month=mean(as.numeric(as.character(month))))
+hh_data_sum3 <- hh_data_sum3[order(hh_data_sum3$year, hh_data_sum3$month),]
+
+ggplot(hh_data_sum3, aes(x=year_month, y=n_houses,group=1)) + 
+  geom_line() +
+  geom_point() +
+  labs(title = "Number of houses monitored",y = "# houses", x="date")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggsave("analisys_v0/plot13.png")
+
+ggplot(hh_data_sum3, aes(x=year_month, y=month_average,group=1)) + 
+  geom_line() +
+  geom_point() +
+  labs(title = "Average monthly consumption",y = "kWh-month", x="date")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
 
 # STATISTICAL TESTS ----
 
@@ -269,6 +291,7 @@ d2 = rnorm(10000, mean = 0, sd = 1)
 wilcox.test(d1,d2, alternative = "two.sided")
 
 # PCA ----
+#GOOD source: http://www.sthda.com/english/wiki/fviz-pca-quick-principal-component-analysis-data-visualization-r-software-and-data-mining
 
 hh_data_ID <- hh_data %>%
   group_by(ID) %>%
@@ -277,6 +300,8 @@ hh_data_ID <- hh_data %>%
                    nt_ratio = mean(nt_ratio, na.rm = TRUE),po_ratio=mean(po_ratio, na.rm = TRUE),
                    pt_ratio = mean(pt_ratio, na.rm = TRUE),ot_ratio = mean(ot_ratio, na.rm = TRUE),
                    hourly_sd = mean(hourly_sd, na.rm = TRUE),hourly_sdm_ratio = mean(hourly_sdm_ratio, na.rm = TRUE),
+                   daily_total_max = max(daily_total, na.rm = TRUE), daily_total_min = min(daily_total, na.rm = TRUE),
+                   daily_total_p75 = quantile(daily_total,0.75), daily_total_p25 = quantile(daily_total,0.25),
                    phh_0 = mean(phh_0, na.rm = TRUE), phh_1 = mean(phh_1, na.rm = TRUE), phh_2 = mean(phh_2, na.rm = TRUE),
                    phh_3 = mean(phh_3, na.rm = TRUE), phh_4 = mean(phh_4, na.rm = TRUE), phh_5 = mean(phh_5, na.rm = TRUE),
                    phh_6 = mean(phh_6, na.rm = TRUE), phh_7 = mean(phh_7, na.rm = TRUE), phh_8 = mean(phh_8, na.rm = TRUE),
@@ -329,7 +354,7 @@ hh_data_ID$daily_sdm_ratio <- hh_data_ID$sd_daily_total/hh_data_ID$m_daily_total
 hh_data_ID_red <- select(hh_data_ID,c(1:10,107))
 hh_data_ID_red2 <- select(hh_data_ID_red,-c('sd_daily_total','hourly_sd','daily_sdm_ratio','hourly_sdm_ratio'))
 
-res_pca <- prcomp(hh_data_ID_red, scale = TRUE)
+res_pca <- prcomp(hh_data_ID, scale = TRUE)
 
 fviz_eig(res_pca)
 ggsave("analisys_v0/pca1.png")
@@ -345,7 +370,7 @@ fviz_pca_ind(res_pca, geom="point")
 
 fviz_pca_ind(res_pca, label="none", habillage=ID_type)
 
-fviz_pca_ind(res_pca, label="none", habillage=ID_group, addEllipses=TRUE, ellipse.level=0.95)
+fviz_pca_ind(res_pca, label="none", habillage=ID_type, addEllipses=TRUE, ellipse.level=0.95)
 ggsave("analisys_v0/pca12.png")
 
 # Helper function 
@@ -362,8 +387,13 @@ head(var.coord[, 1:4])
 
 
 #CREATE SUMMARY RESULTS DATA FOR PCA----
+
 hh_data_ID_all <- hh_data_ID
 hh_data_ID_all$ACORN_type <- ID_type
+
+hh_data_ID_all %>%
+  group_by(ACORN_type) %>%
+  dplyr::summarise(daily_consumption = mean(m_daily_total), sd_daily_consuption = sd(m_daily_total))
 
 hh_ID_summ <- hh_data_ID_all %>%
   group_by(ACORN_type) %>%
@@ -372,6 +402,8 @@ hh_ID_summ <- hh_data_ID_all %>%
                    nt_ratio = mean(nt_ratio, na.rm = TRUE),po_ratio=mean(po_ratio, na.rm = TRUE),
                    pt_ratio = mean(pt_ratio, na.rm = TRUE),ot_ratio = mean(ot_ratio, na.rm = TRUE),
                    hourly_sd = mean(hourly_sd, na.rm = TRUE),hourly_sdm_ratio = mean(hourly_sdm_ratio, na.rm = TRUE),
+                   daily_total_max = max(m_daily_total, na.rm = TRUE), daily_total_min = min(m_daily_total, na.rm = TRUE),
+                   daily_total_p75 = quantile(m_daily_total,0.75), daily_total_p25 = quantile(m_daily_total,0.25),
                    phh_0 = mean(phh_0, na.rm = TRUE), phh_1 = mean(phh_1, na.rm = TRUE), phh_2 = mean(phh_2, na.rm = TRUE),
                    phh_3 = mean(phh_3, na.rm = TRUE), phh_4 = mean(phh_4, na.rm = TRUE), phh_5 = mean(phh_5, na.rm = TRUE),
                    phh_6 = mean(phh_6, na.rm = TRUE), phh_7 = mean(phh_7, na.rm = TRUE), phh_8 = mean(phh_8, na.rm = TRUE),
