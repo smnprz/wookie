@@ -1,0 +1,4 @@
+,Adversity,Affluent,Comfortable,Class error,,Total,Number of misclassified,Apparent error rate
+Adversity,818,415,442,0.511641791,,4074,2073,0.508836524
+Affluent,487,1043,542,0.496621622,,,,
+Comfortable,99,88,140,0.571865443,,,,

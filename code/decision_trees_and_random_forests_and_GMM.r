@@ -42,9 +42,9 @@ tree <- rpart(ACORN_type ~ daily_sdm_ratio + daily_total_p25 + daily_total_p75  
 full_tree <- rpart(ACORN_type ~., data = input_hh, method = "class", control = rpart.control(minsplit = 30, cp = 0.0053))
 
 
-printcp(tree) # Displays the results.
-plotcp(tree) # Visualise cross-validation results.
-summary(tree) # detailed summary of splits.
+printcp(full_tree) # Displays the results.
+plotcp(full_tree) # Visualise cross-validation results.
+summary(full_tree) # detailed summary of splits.
 
 # VISUALISE RESULTS
 
@@ -80,14 +80,23 @@ ptree_prior <- prune(tree_prior, cp = tree_min)
 # Use prp() to plot the pruned tree
 prp(ptree_prior)
 
-
-
 # How many households are in each ACORN group?
 
 nrow(input_hh[which(input_hh$ACORN_type == "Adversity"),]) # 1404
 nrow(input_hh[which(input_hh$ACORN_type == "Comfortable"),]) # 1124
 nrow(input_hh[which(input_hh$ACORN_type == "Affluent"),]) # 1546
 
+# Accuracy of the tree?
+
+# First use the tree to make predictions.
+pred <- predict(full_tree, type = "class")
+ID_type$ACORN_type <- factor(ID_type$ACORN_type)
+Class <- ID_type$ACORN_type
+table(pred, Class)
+
+# Output the confusion matrix as a csv.
+decision_tree_confusion_matrix <- table(pred, Class)
+write.csv(x = decision_tree_confusion_matrix, file = "decision_tree_confusion_matrix.csv")
 
 ##############################################################################################
 #

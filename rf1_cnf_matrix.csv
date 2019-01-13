@@ -1,4 +1,4 @@
-"","Adversity","Affluent","Comfortable","class.error"
-"Adversity",788,412,204,0.438746438746439
-"Affluent",425,935,186,0.395213454075032
-"Comfortable",465,476,183,0.837188612099644
+,Adversity,Affluent,Comfortable,class.error,,Total,Number of misclassified,Apparent error rate
+Adversity,788,412,204,0.438746439,,4074,2168,0.53215513
+Affluent,425,935,186,0.395213454,,,,
+Comfortable,465,476,183,0.837188612,,,,
