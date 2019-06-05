@@ -1,8 +1,4 @@
 # LOAD PACKAGES AND DATA -----
-
-#load(file = "E:/University College London/BENV0091 Energy Data Analysis/Group project/Data/London smart meter data 1GB/halfhourly_data.Rda")
-load(file = "../Data/SML_data/tidy_data/halfhourly_data.Rda")
-
 library(lubridate)
 library(tidyverse)
 library(stringr)
@@ -11,20 +7,39 @@ library(janitor)
 library(matrixStats)
 library(imputeTS)
 
+
+load(file = "../Data/SML_data/tidy_data/halfhourly_data.Rda")
+
 hh_full_data <- hh_data
-rm(hh_data)
-
-str(hh_full_data) # Let's look at the features and see what types of variables there are.
-
-# Some categorical variables need to be converted to type factor.
-
-hh_full_data$ID <- as.factor(hh_full_data$ID)
 hh_full_data$year <- as.factor(hh_full_data$year)
-hh_full_data$month <- as.factor(hh_full_data$month)
 hh_full_data$tariff_type <- as.factor(hh_full_data$tariff_type)
+
+hh_data_ss <- hh_full_data
+hh_data_ss <- hh_data_ss[as.numeric(as.character(hh_data_ss$year)) == 2013 & as.character(hh_data_ss$tariff_type) == "Std",]
+
+print(nrow(hh_data_ss))
+print(sum(rowSums(hh_data_ss[,3:50]==0,na.rm = TRUE)>0))
+print(sum(rowSums(hh_data_ss[,3:50]==0,na.rm = TRUE)>0)/nrow(hh_data_ss))
+
+
+
+
+
+hh_data_ss_raw <- hh_data_ss
+
+save(hh_data_ss_raw, file = "Article/hh_data_no_features_2.Rda")
+
+
+rm(hh_data)
+# Some categorical variables need to be converted to type factor.
+hh_full_data$ID <- as.factor(hh_full_data$ID)
+hh_full_data$month <- as.factor(hh_full_data$month)
 hh_full_data$ACORN_group <- as.factor(hh_full_data$ACORN_group)
 hh_full_data$ACORN_type <- as.factor(hh_full_data$ACORN_type)
 hh_full_data$is_we_hd <- as.factor(hh_full_data$is_we_hd)
+
+
+#OLD CODE -------
 
 # IDENTIFYING MISSING VALUES ----
 
@@ -95,7 +110,13 @@ ggplot(zero_values_distribution[2:49,], aes(x = num_of_zeros, y = counts)) +
 hh_data_ss <- hh_full_data
 hh_data_ss <- hh_data_ss[as.numeric(as.character(hh_data_ss$year)) == 2013 & as.character(hh_data_ss$tariff_type) == "Std",]
 
+hh_data_ss_raw <- hh_data_ss
+
+save(hh_data_ss_raw, file = "Article/hh_data_no_features_2.Rda")
+
+
 #Drop rows with 48 values == to zero
+
 hh_data_ss <- hh_data_ss[which(rowSums(hh_data_ss[,3:50] == 0) != 48),]
 
 #Select ID with at least 80% of the days measured (discussion!)
@@ -125,8 +146,6 @@ hh_data_ss %>%
 ids_nan <- unique(hh_data_ss[hh_data_ss$ACORN_type=="ACORN-U" | hh_data_ss$ACORN_type=="ACORN-",]$ID)
 length(ids_nan)
 hh_data_ss <- hh_data_ss[!(hh_data_ss$ID %in% ids_nan),]
-
-save(hh_data_ss,file="Article/hh_data_no_features.Rda")
 
 # FEATURE ENGINEERING ----
 

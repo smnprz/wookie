@@ -45,6 +45,8 @@ hh_data <- hh_data[!(hh_data$ID %in% ids_nan),]
 nrow(hh_data[hh_data$daily_total==0,])
 length(unique(hh_data[hh_data$daily_total==0,]$ID))/length(unique(hh_data$ID))
 
+#save(hh_data,file="../Data/SML_data/tidy_data/hh_data_no_features.Rda")
+
 # SELECT A SUBSET OF DATA SET OF IDS FOR ANALYSIS (TEMPORARY)----
 
 #ids <-  unique(hh_data$ID)
